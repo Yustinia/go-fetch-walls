@@ -20,7 +20,10 @@ type Settings struct {
 }
 
 type Wallpaper struct {
-	Path string `json:"path"`
+	Path       string `json:"path"`
+	Purity     string `json:"purity"`
+	Category   string `json:"category"`
+	Resolution string `json:"resolution"`
 }
 
 type Response struct {
@@ -66,5 +69,9 @@ func main() {
 
 	for index, wall := range result.Data {
 		fmt.Printf("[%d]: %v\n", index, wall.Path)
+		fmt.Printf("	Category: %v\n", wall.Category)
+		fmt.Printf("   	Purity: %v\n", wall.Purity)
+		fmt.Printf("   	Resolution: %v\n", wall.Resolution)
+		fmt.Println()
 	}
 }
