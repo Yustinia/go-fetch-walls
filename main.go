@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"go-fetch-walls/api"
+	"go-fetch-walls/cmd"
 	"go-fetch-walls/internal"
 )
 
@@ -47,4 +48,9 @@ func main() {
 	}
 
 	printWallData(&result)
+
+	err = cmd.Downloader(&result)
+	if err != nil {
+		panic(err)
+	}
 }
