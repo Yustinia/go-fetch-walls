@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 	"net/url"
@@ -36,9 +37,13 @@ func loadSettings(configPath string, settings *Settings) error {
 		return err
 	}
 
-	err = json.Unmarshal(configData, &settings)
+	err = json.Unmarshal(configData, settings)
 	if err != nil {
 		return err
+	}
+
+	if len(settings.API) < 20 {
+		return errors.New("invalid api key")
 	}
 
 	return nil
