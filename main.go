@@ -87,9 +87,17 @@ func printWallData(result *Response) {
 	}
 }
 
+func devModeSettings(mode bool) string {
+	if mode {
+		return "configs/dev_settings.json"
+	}
+
+	return "configs/settings.json"
+}
+
 func main() {
+	configPath := devModeSettings(true)
 	baseURL := "https://wallhaven.cc/api/v1/search?"
-	configPath := "configs/settings.json"
 	var settings Settings
 
 	err := loadSettings(configPath, &settings)

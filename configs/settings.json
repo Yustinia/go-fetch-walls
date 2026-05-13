@@ -1,7 +1,7 @@
 {
     "api_key": "key_here",
     "categories": "010",
-    "purity": "111",
+    "purity": "100",
     "sorting": "random",
     "order": "desc",
     "atleast": "1920x1080",
