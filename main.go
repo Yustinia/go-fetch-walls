@@ -2,7 +2,6 @@ package main
 
 import (
 	"encoding/json"
-	"errors"
 	"fmt"
 	"net/http"
 	"net/url"
@@ -37,13 +36,12 @@ func loadSettings(configPath string, settings *Settings) error {
 		return err
 	}
 
-	err = json.Unmarshal(configData, settings)
-	if err != nil {
-		return err
-	}
+	return json.Unmarshal(configData, settings)
+}
 
+func validateSettings(settings *Settings) error {
 	if len(settings.API) < 20 {
-		return errors.New("invalid api key")
+		return fmt.Errorf("'%v' is an invalid api key", settings.API)
 	}
 
 	return nil
@@ -94,7 +92,15 @@ func main() {
 	configPath := "configs/settings.json"
 	var settings Settings
 
-	loadSettings(configPath, &settings)
+	err := loadSettings(configPath, &settings)
+	if err != nil {
+		panic(err)
+	}
+	err = validateSettings(&settings)
+	if err != nil {
+		panic(err)
+	}
+
 	params := buildParams(&settings)
 	fullURL := baseURL + params.Encode()
 
