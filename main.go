@@ -5,6 +5,8 @@ import (
 	"go-fetch-walls/api"
 	"go-fetch-walls/cmd"
 	"go-fetch-walls/internal"
+	"os"
+	"path/filepath"
 )
 
 func printWallData(result *api.Response) {
@@ -17,20 +19,32 @@ func printWallData(result *api.Response) {
 	}
 }
 
-func devModeSettings(mode bool) string {
+func devModeSettings(mode bool) (string, error) {
 	if mode {
-		return "configs/dev_settings.json"
+		return "configs/dev_settings.json", nil
 	}
 
-	return "configs/settings.json"
+	homeDir, err := os.UserHomeDir()
+	if err != nil {
+		return "", fmt.Errorf("HOME not found: %w", err)
+	}
+
+	fullPath := filepath.Join(homeDir, ".config", "go-fetch-walls", "settings.json")
+	return fullPath, nil
 }
 
 func main() {
-	configPath := devModeSettings(true)
+	const DevMode = false
+
+	configPath, err := devModeSettings(DevMode)
+	if err != nil {
+		panic(err)
+	}
+
 	baseURL := "https://wallhaven.cc/api/v1/search?"
 	var settings internal.Settings
 
-	err := internal.LoadSettings(configPath, &settings)
+	err = internal.LoadSettings(configPath, &settings)
 	if err != nil {
 		panic(err)
 	}
