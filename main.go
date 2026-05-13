@@ -30,19 +30,21 @@ type Response struct {
 	Data []Wallpaper `json:"data"`
 }
 
-func main() {
-	baseURL := "https://wallhaven.cc/api/v1/search?"
-	configData, err := os.ReadFile("configs/settings.json")
+func loadSettings(configPath string, settings *Settings) error {
+	configData, err := os.ReadFile(configPath)
 	if err != nil {
-		panic(err)
+		return err
 	}
 
-	var settings Settings
 	err = json.Unmarshal(configData, &settings)
 	if err != nil {
-		panic(err)
+		return err
 	}
 
+	return nil
+}
+
+func buildParams(settings *Settings) url.Values {
 	params := url.Values{}
 	params.Set("apikey", settings.API)
 	params.Set("categories", settings.Categories)
@@ -53,20 +55,26 @@ func main() {
 	params.Set("ratios", settings.Ratios)
 	params.Set("page", fmt.Sprintf("%d", settings.Page))
 
-	fullURL := baseURL + params.Encode()
+	return params
+}
 
+func getResponse(fullURL string) (Response, error) {
 	resp, err := http.Get(fullURL)
 	if err != nil {
-		panic(err)
+		return Response{}, err
 	}
 	defer resp.Body.Close()
 
 	var result Response
 	err = json.NewDecoder(resp.Body).Decode(&result)
 	if err != nil {
-		panic(err)
+		return Response{}, err
 	}
 
+	return result, nil
+}
+
+func printWallData(result *Response) {
 	for index, wall := range result.Data {
 		fmt.Printf("[%d]: %v\n", index, wall.Path)
 		fmt.Printf("	Category: %v\n", wall.Category)
@@ -74,4 +82,21 @@ func main() {
 		fmt.Printf("   	Resolution: %v\n", wall.Resolution)
 		fmt.Println()
 	}
+}
+
+func main() {
+	baseURL := "https://wallhaven.cc/api/v1/search?"
+	configPath := "configs/settings.json"
+	var settings Settings
+
+	loadSettings(configPath, &settings)
+	params := buildParams(&settings)
+	fullURL := baseURL + params.Encode()
+
+	result, err := getResponse(fullURL)
+	if err != nil {
+		panic(err)
+	}
+
+	printWallData(&result)
 }
