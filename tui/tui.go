@@ -11,6 +11,14 @@ import (
 )
 
 type state int
+type dlStatus int
+type downloadDoneMsg struct{}
+
+const (
+	dlIdle dlStatus = iota
+	dlInProgress
+	dlDone
+)
 
 const (
 	stateList state = iota
@@ -18,9 +26,10 @@ const (
 )
 
 type model struct {
-	walls   []internal.Wallpaper
-	cursor  int
-	current state
+	walls    []internal.Wallpaper
+	cursor   int
+	current  state
+	download dlStatus
 }
 
 func WallsModel(result api.Response) model {
@@ -34,6 +43,9 @@ func WallsModel(result api.Response) model {
 var (
 	leftCol  = lipgloss.NewStyle().Width(70)
 	rightCol = lipgloss.NewStyle().Width(80)
+
+	metaStyle   = lipgloss.NewStyle().Height(20)
+	statusStyle = lipgloss.NewStyle().Height(5)
 )
 
 func renderMeta(m model) string {
@@ -62,6 +74,22 @@ func renderList(m model) string {
 	return s
 }
 
+func renderStatus(m model) string {
+	wall := m.walls[m.cursor]
+	switch m.download {
+	case dlIdle:
+		return fmt.Sprint("Enter to Download")
+
+	case dlInProgress:
+		return fmt.Sprint("Downloading...")
+
+	case dlDone:
+		return fmt.Sprintf("Finished %v", wall.Path)
+	}
+
+	return ""
+}
+
 func (m model) Init() tea.Cmd {
 	return nil
 }
@@ -75,10 +103,12 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case "up", "h":
 			if m.cursor > 0 {
 				m.cursor--
+				m.download = dlIdle
 			}
 		case "down", "l":
 			if m.cursor < len(m.walls)-1 {
 				m.cursor++
+				m.download = dlIdle
 			}
 		case "enter":
 			wall := m.walls[m.cursor]
@@ -87,9 +117,13 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				if err != nil {
 					return err
 				}
-				return nil
+				return downloadDoneMsg{}
 			}
 		}
+
+	case downloadDoneMsg:
+		m.download = dlDone
+		return m, nil
 	}
 
 	return m, nil
@@ -99,7 +133,12 @@ func (m model) View() tea.View {
 	switch m.current {
 	case stateList:
 		left := leftCol.Render(renderList(m))
-		right := rightCol.Render(renderMeta(m))
+
+		meta := metaStyle.Render(renderMeta(m))
+		status := statusStyle.Render(renderStatus(m))
+
+		right := rightCol.Render(lipgloss.JoinVertical(lipgloss.Top, meta, status))
+
 		return tea.NewView(lipgloss.JoinHorizontal(lipgloss.Top, left, right))
 	}
 
