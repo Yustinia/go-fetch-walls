@@ -9,11 +9,6 @@ import (
 	"path/filepath"
 )
 
-var WgetFlags = []string{
-	"--show-progress",
-	"-P",
-}
-
 func setDlPath() (string, error) {
 	homeDir, err := os.UserHomeDir()
 	if err != nil {
