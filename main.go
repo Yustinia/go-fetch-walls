@@ -8,6 +8,7 @@ import (
 	"path/filepath"
 
 	tea "charm.land/bubbletea/v2"
+	"charm.land/lipgloss/v2"
 )
 
 func printWallData(result *api.Response) {
@@ -34,13 +35,56 @@ func devModeSettings(mode bool) (string, error) {
 	return fullPath, nil
 }
 
+type state int
+
+const (
+	stateList state = iota
+	stateDownload
+)
+
 type model struct {
-	walls  []internal.Wallpaper
-	cursor int
+	walls   []internal.Wallpaper
+	cursor  int
+	current state
 }
 
-func initialModel(result api.Response) model {
-	return model{walls: result.Data}
+func wallsModel(result api.Response) model {
+	return model{
+		walls:   result.Data,
+		cursor:  0,
+		current: stateList,
+	}
+}
+
+var (
+	leftCol  = lipgloss.NewStyle().Width(70)
+	rightCol = lipgloss.NewStyle().Width(80)
+)
+
+func renderMeta(m model) string {
+	wall := m.walls[m.cursor]
+	return fmt.Sprintf(
+		"Path: %s\nCategory: %s\nPurity: %s\nResolution: %s\n",
+		wall.Path,
+		wall.Category,
+		wall.Purity,
+		wall.Resolution,
+	)
+}
+
+func renderList(m model) string {
+	s := ""
+	for index, wall := range m.walls {
+		cursor := " "
+
+		if m.cursor == index {
+			cursor = ">"
+		}
+
+		s += fmt.Sprintf("%s %s\n", cursor, wall.Path)
+	}
+
+	return s
 }
 
 func (m model) Init() tea.Cmd {
@@ -53,11 +97,11 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		switch msg.String() {
 		case "ctrl+c", "q":
 			return m, tea.Quit
-		case "up":
+		case "up", "h":
 			if m.cursor > 0 {
 				m.cursor--
 			}
-		case "down":
+		case "down", "l":
 			if m.cursor < len(m.walls)-1 {
 				m.cursor++
 			}
@@ -68,16 +112,14 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 }
 
 func (m model) View() tea.View {
-	s := ""
-	for index, wall := range m.walls {
-		cursor := "  "
-		if m.cursor == index {
-			cursor = "> "
-		}
-		s += fmt.Sprintf("%s %s\n", cursor, wall.Path)
+	switch m.current {
+	case stateList:
+		left := leftCol.Render(renderList(m))
+		right := rightCol.Render(renderMeta(m))
+		return tea.NewView(lipgloss.JoinHorizontal(lipgloss.Top, left, right))
 	}
 
-	return tea.NewView(s)
+	return tea.NewView("")
 }
 
 func main() {
@@ -108,14 +150,8 @@ func main() {
 		panic(err)
 	}
 
-	p := tea.NewProgram(initialModel(result))
+	p := tea.NewProgram(wallsModel(result))
 	if _, err := p.Run(); err != nil {
 		panic(err)
 	}
-	// printWallData(&result)
-
-	// err = cmd.Downloader(&result)
-	// if err != nil {
-	// 	panic(err)
-	// }
 }
