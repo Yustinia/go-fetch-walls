@@ -2,7 +2,6 @@ package cmd
 
 import (
 	"fmt"
-	"go-fetch-walls/api"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -24,23 +23,21 @@ func setDlPath() (string, error) {
 	return outPath, nil
 }
 
-func Downloader(result *api.Response) error {
+func Downloader(wall string) error {
 	dlPath, err := setDlPath()
 	if err != nil {
 		return err
 	}
 
-	for _, wall := range result.Data {
-		args := append(WgetFlags, dlPath, wall.Path)
-		cmd := exec.Command("wget", args...)
+	args := append(WgetFlags, dlPath, wall)
+	cmd := exec.Command("wget", args...)
 
-		cmd.Stdout = os.Stdout
-		cmd.Stderr = os.Stderr
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
 
-		err := cmd.Run()
-		if err != nil {
-			return fmt.Errorf("failed to download %v: %w\n", wall.Path, err)
-		}
+	err = cmd.Run()
+	if err != nil {
+		return fmt.Errorf("failed to download %v: %w\n", wall, err)
 	}
 
 	return nil
