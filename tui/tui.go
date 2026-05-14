@@ -13,6 +13,9 @@ import (
 type state int
 type dlStatus int
 type downloadDoneMsg struct{}
+type newPageMsg struct {
+	walls []internal.Wallpaper
+}
 
 const (
 	dlIdle dlStatus = iota
@@ -30,13 +33,17 @@ type model struct {
 	cursor   int
 	current  state
 	download dlStatus
+	page     uint
+	baseURL  string
 }
 
-func WallsModel(result api.Response) model {
+func WallsModel(result api.Response, baseURL string) model {
 	return model{
 		walls:   result.Data,
 		cursor:  0,
 		current: stateList,
+		page:    1,
+		baseURL: baseURL,
 	}
 }
 
@@ -119,10 +126,25 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				}
 				return downloadDoneMsg{}
 			}
+		case "n":
+			m.page++
+			return m, func() tea.Msg {
+				result, err := api.GetResponse(fmt.Sprintf("%s&page=%d", m.baseURL, m.page))
+				if err != nil {
+					return err
+				}
+				return newPageMsg{walls: result.Data}
+			}
 		}
 
 	case downloadDoneMsg:
 		m.download = dlDone
+		return m, nil
+
+	case newPageMsg:
+		m.walls = msg.walls
+		m.cursor = 0
+		m.download = dlIdle
 		return m, nil
 	}
 

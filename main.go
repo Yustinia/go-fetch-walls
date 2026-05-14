@@ -63,7 +63,7 @@ func main() {
 		panic(err)
 	}
 
-	p := tea.NewProgram(tui.WallsModel(result))
+	p := tea.NewProgram(tui.WallsModel(result, fullURL))
 	if _, err := p.Run(); err != nil {
 		panic(err)
 	}
