@@ -36,7 +36,7 @@ func devModeSettings(mode bool) (string, error) {
 }
 
 func main() {
-	const DevMode = true
+	const DevMode = false
 
 	configPath, err := devModeSettings(DevMode)
 	if err != nil {
