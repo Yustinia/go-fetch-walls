@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"go-fetch-walls/api"
 	"go-fetch-walls/internal"
+	"go-fetch-walls/tui"
 	"os"
 	"path/filepath"
 
@@ -62,7 +63,7 @@ func main() {
 		panic(err)
 	}
 
-	p := tea.NewProgram(internal.WallsModel(result))
+	p := tea.NewProgram(tui.WallsModel(result))
 	if _, err := p.Run(); err != nil {
 		panic(err)
 	}

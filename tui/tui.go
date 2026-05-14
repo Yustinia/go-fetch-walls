@@ -1,8 +1,9 @@
-package internal
+package tui
 
 import (
 	"fmt"
 	"go-fetch-walls/api"
+	"go-fetch-walls/cmd"
 	"go-fetch-walls/internal"
 
 	tea "charm.land/bubbletea/v2"
@@ -78,6 +79,15 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case "down", "l":
 			if m.cursor < len(m.walls)-1 {
 				m.cursor++
+			}
+		case "enter":
+			wall := m.walls[m.cursor]
+			return m, func() tea.Msg {
+				err := cmd.Downloader(wall.Path)
+				if err != nil {
+					return err
+				}
+				return nil
 			}
 		}
 	}
