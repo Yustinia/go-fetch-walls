@@ -2,8 +2,10 @@ package cmd
 
 import (
 	"fmt"
+	"go-fetch-walls/internal"
+	"io"
+	"net/http"
 	"os"
-	"os/exec"
 	"path/filepath"
 )
 
@@ -23,21 +25,27 @@ func setDlPath() (string, error) {
 	return outPath, nil
 }
 
-func Downloader(wall string) error {
+func WallDownloader(wall internal.Wallpaper) error {
 	dlPath, err := setDlPath()
 	if err != nil {
 		return err
 	}
 
-	args := append(WgetFlags, dlPath, wall)
-	cmd := exec.Command("wget", args...)
-
-	cmd.Stdout = os.Stdout
-	cmd.Stderr = os.Stderr
-
-	err = cmd.Run()
+	resp, err := http.Get(wall.Path)
 	if err != nil {
-		return fmt.Errorf("failed to download %v: %w\n", wall, err)
+		return err
+	}
+	defer resp.Body.Close()
+
+	file, err := os.Create(filepath.Join(dlPath, filepath.Base(wall.Path)))
+	if err != nil {
+		return err
+	}
+	defer file.Close()
+
+	_, err = io.Copy(file, resp.Body)
+	if err != nil {
+		return err
 	}
 
 	return nil

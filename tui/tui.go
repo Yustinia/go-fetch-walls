@@ -83,7 +83,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case "enter":
 			wall := m.walls[m.cursor]
 			return m, func() tea.Msg {
-				err := cmd.Downloader(wall.Path)
+				err := cmd.WallDownloader(wall)
 				if err != nil {
 					return err
 				}
